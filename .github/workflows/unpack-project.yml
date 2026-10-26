@@ -3,7 +3,9 @@ name: Unpack Papyronix project archive
 on:
   push:
     branches: [main]
-  workflow_dispatch:
+    paths:
+      - 'PapyronixAI_Complete_Project.zip'
+      - 'PapyronixAI_Django_Local.zip'
 
 permissions:
   contents: write
@@ -22,10 +24,12 @@ jobs:
           from pathlib import Path
           from zipfile import ZipFile
 
-          archive = Path('PapyronixAI_Complete_Project.zip')
+          candidates = [Path('PapyronixAI_Complete_Project.zip'), Path('PapyronixAI_Django_Local.zip')]
+          archive = next((p for p in candidates if p.is_file()), None)
+          if archive is None:
+              print('No project archive found; nothing to extract.')
+              raise SystemExit(0)
           root = Path('.').resolve()
-          if not archive.is_file():
-              raise SystemExit('Project ZIP was not found at repository root.')
           with ZipFile(archive) as zf:
               for item in zf.infolist():
                   target = (root / item.filename).resolve()
