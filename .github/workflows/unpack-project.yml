@@ -1,0 +1,48 @@
+name: Unpack Papyronix project archive
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'PapyronixAI_Django_Local.zip'
+
+permissions:
+  contents: write
+
+jobs:
+  unpack-project:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Extract source into repository root
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          from zipfile import ZipFile
+
+          archive = Path('PapyronixAI_Django_Local.zip')
+          root = Path('.').resolve()
+          if not archive.is_file():
+              raise SystemExit('Project ZIP was not found at repository root.')
+          with ZipFile(archive) as zf:
+              for item in zf.infolist():
+                  target = (root / item.filename).resolve()
+                  if target != root and root not in target.parents:
+                      raise SystemExit(f'Unsafe archive path: {item.filename}')
+              zf.extractall(root)
+          archive.unlink()
+          PY
+      - name: Commit extracted project source
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -A
+          if git diff --cached --quiet; then
+            echo 'No extracted source changes to commit.'
+            exit 0
+          fi
+          git commit -m 'Add full Papyronix AI source'
+          git push
