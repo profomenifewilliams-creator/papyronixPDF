@@ -1,0 +1,11 @@
+.git
+.github
+__pycache__/
+*.py[cod]
+.env
+.venv/
+venv/
+media/
+staticfiles/
+*.sqlite3
+# Keep PapyronixAI_Django_Local.zip in the Docker build context.
