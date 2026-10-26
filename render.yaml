@@ -7,6 +7,7 @@ databases:
     databaseName: papyronix_ai
     user: papyronix_ai
     plan: basic-256mb
+    diskSizeGB: 1
     region: frankfurt
     postgresMajorVersion: "18"
 
