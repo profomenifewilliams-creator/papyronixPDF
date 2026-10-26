@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+{% block title %}Papyronix — Your Offline Document Toolkit{% endblock %}
+{% block content %}
+<section class="hero-section">
+  <div class="container hero-grid">
+    <div class="hero-copy">
+      <div class="eyebrow"><span class="eyebrow-pulse"></span> THE INDEPENDENT DOCUMENT WORKSPACE</div>
+      <h1>Make every document<br><em>work smarter.</em></h1>
+      <p class="hero-lead">A powerful offline-first document toolkit for PDF, Word, Excel, PowerPoint, text and scanned pages. Process, convert, clean and organize files without AI tokens, AI APIs or third-party document processing services.</p>
+      <div class="hero-actions"><a class="button-primary" href="{% url 'studio' %}">Open Document Studio <span>→</span></a><a class="button-secondary" href="{% url 'builder' %}">Create a Word document</a></div>
+      <div class="hero-trust"><span><i>✓</i> No cloud API required</span><span><i>✓</i> Python document engine</span><span><i>✓</i> Original files preserved</span></div>
+    </div>
+    <div class="hero-art" aria-label="Decorative document workspace preview">
+      <div class="hero-halo"></div><div class="hero-chip chip-top"><span class="chip-icon">✦</span><span><b>Local-first workflow</b><small>Processed by your own app</small></span></div>
+      <div class="hero-paper-back paper-back-two"></div><div class="hero-paper-back paper-back-one"><span></span><span></span><span></span></div>
+      <div class="hero-paper"><div class="paper-topline"><span class="pdf-pill">PDF</span><span class="paper-dot-row">•••</span></div><div class="paper-title-bar"></div><div class="paper-line"></div><div class="paper-line width-72"></div><div class="paper-chart"><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div><div class="paper-line"></div><div class="paper-line width-86"></div><div class="paper-footer"><span>PAPYRONIX AI</span><b>01</b></div></div>
+      <div class="hero-chip chip-bottom"><span class="chip-success">✓</span><span><b>Ready to export</b><small>Your original stays untouched</small></span></div><div class="hero-art-caption"><span></span> LOCAL DOCUMENT ENGINE</div>
+    </div>
+  </div>
+</section>
+
+<section class="benefit-bar container"><div><b>One workspace</b><span>Word, PDF, Excel & more</span></div><div><b>Python-powered</b><span>Django backend engine</span></div><div><b>Local database</b><span>SQLite by default</span></div><div><b>Responsive UI</b><span>Desktop, tablet and phone</span></div></section>
+
+<section class="section-block container" id="tools">
+  <div class="section-heading"><div><span class="section-kicker">THE TOOLKIT</span><h2>The right tool.<br class="mobile-break"> Right now.</h2><p>Choose a tool, upload a file and download the result. The processing logic runs locally through your Python/Django engine.</p></div><a href="{% url 'studio' %}" class="plain-link">View every tool <span>→</span></a></div>
+  <div class="tool-card-grid">
+    {% for tool in tools %}<a class="tool-card" href="{% url 'tool_page' tool.slug %}"><span class="tool-icon icon-{{ tool.icon }}">{% if tool.slug == 'merge' %}▤{% elif tool.slug == 'split' %}⇱{% elif tool.slug == 'extract' %}▣{% elif tool.slug == 'rotate' %}↻{% elif tool.slug == 'remove' %}×{% elif tool.slug == 'reorder' %}☷{% elif tool.slug == 'watermark' %}✦{% elif tool.slug == 'page-numbers' %}# {% else %}◈{% endif %}</span><b>{{ tool.name }}</b><p>{{ tool.description }}</p><span class="tool-card-arrow">↗</span></a>{% endfor %}
+  </div>
+</section>
+
+<section class="privacy-section"><div class="container privacy-grid"><div class="privacy-shield"><svg viewBox="0 0 48 48" fill="none"><path d="M24 4 40 10v12c0 10-7 17-16 22C15 39 8 32 8 22V10L24 4Z" stroke="currentColor" stroke-width="2.2"/><path d="m16 24 5 5 11-12" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg></div><div><span class="section-kicker light-kicker">YOUR SERVER. YOUR CONTROL.</span><h2>Documents should not have to make a detour.</h2><p>Document operations run through your own Django application. The app uses local Python packages and optional local utilities for OCR and office rendering; it does not require AI tokens or AI API keys.</p></div><div class="privacy-points"><span>✓ No external PDF API</span><span>✓ No mandatory AI API key</span><span>✓ No Floot dependency</span></div></div></section>
+
+<section class="section-block container final-cta"><div><span class="section-kicker">BUILT FOR YOUR WORKFLOW</span><h2>Start with a file.<br><em>Finish with a result.</em></h2><p>Run Papyronix locally, manage your own data and decide where to host it when you're ready.</p></div><a class="button-primary" href="{% url 'studio' %}">Launch the studio <span>→</span></a></section>
+{% endblock %}

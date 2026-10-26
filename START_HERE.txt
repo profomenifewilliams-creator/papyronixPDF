@@ -1,0 +1,45 @@
+PAPYRONIX AI — START HERE
+========================
+
+WHAT THIS IS
+Papyronix AI is a Django document-processing website. It does not call an AI API and does not need AI tokens. It uses local Python document libraries; some OCR and Office-to-PDF features also need the Tesseract and LibreOffice programs.
+
+DOWNLOAD CHECK
+This is the complete project source package. Extract this ZIP into a new folder named papyronix_ai. Do not run the project from inside the ZIP preview.
+
+WINDOWS QUICK START
+1. Install Python 3.12 or 3.13 from https://www.python.org/downloads/ . During setup, enable “Add Python to PATH”.
+2. Connect to the internet for the initial dependency installation.
+3. Extract this ZIP.
+4. Open the extracted folder and double-click run_windows.bat.
+5. Wait for package installation and database setup to finish. Then open http://127.0.0.1:8000 in your browser.
+6. Register an account in the app.
+
+If Windows blocks the batch file, open Command Prompt in the extracted folder and run:
+  py -m venv .venv
+  .venv\Scripts\activate
+  py -m pip install --upgrade pip
+  pip install -r requirements.txt
+  copy .env.example .env
+  python manage.py migrate
+  python manage.py check
+  python manage.py test
+  python manage.py runserver 127.0.0.1:8000
+
+MACOS / LINUX QUICK START
+1. Install Python 3.12 or 3.13.
+2. Extract this ZIP and open a terminal in the extracted folder.
+3. Run: bash run_local.sh
+4. Open http://127.0.0.1:8000 and register an account.
+
+OPTIONAL FEATURES
+- Office document to PDF conversion requires LibreOffice.
+- OCR requires Tesseract OCR and the desired language data.
+- Docker installs these optional programs in the container.
+
+IMPORTANT LIMITATIONS
+- Python dependencies need an internet connection to install the first time. After setup, ordinary local processing can run without a network connection.
+- Core document-engine unit tests: 51 passing in the packaging environment.
+- Full Django startup/check/migrations could not be verified in this build environment because Django and several web dependencies were not installed and package-index access was unavailable. Run the commands above on a computer with network access before relying on a production deployment.
+- Public hosting is not configured or live just by downloading this archive. Review hosting costs and security settings before deploying.
+- Do not upload private client documents to a public server until access controls, backups, file limits, and operational monitoring have been reviewed.

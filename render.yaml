@@ -1,0 +1,42 @@
+# Render Blueprint for Papyronix AI.
+# This uses paid compute, a paid PostgreSQL database, and a persistent disk so
+# the document library survives restarts and deployments. Review plan/pricing in
+# the Render dashboard before applying the Blueprint.
+databases:
+  - name: papyronix-ai-db
+    databaseName: papyronix_ai
+    user: papyronix_ai
+    plan: 256mb
+    region: frankfurt
+    postgresMajorVersion: "18"
+
+services:
+  - type: web
+    name: papyronix-ai
+    runtime: docker
+    plan: 0.5c-512mb
+    region: frankfurt
+    dockerfilePath: ./Dockerfile
+    autoDeploy: true
+    healthCheckPath: /health/
+    disk:
+      name: papyronix-data
+      mountPath: /var/data
+      sizeGB: 1
+    envVars:
+      - key: DJANGO_DEBUG
+        value: "False"
+      - key: DJANGO_SECRET_KEY
+        generateValue: true
+      - key: DJANGO_SECURE_COOKIES
+        value: "True"
+      - key: DJANGO_SECURE_SSL_REDIRECT
+        value: "True"
+      - key: PAPYRONIX_DATA_DIR
+        value: /var/data
+      - key: PAPYRONIX_MEDIA_ROOT
+        value: /var/data/media
+      - key: DATABASE_URL
+        fromDatabase:
+          name: papyronix-ai-db
+          property: connectionString

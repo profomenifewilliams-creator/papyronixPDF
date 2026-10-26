@@ -1,0 +1,123 @@
+{% extends "base.html" %}
+{% block title %}{{ tool.name }} — Papyronix AI{% endblock %}
+{% block content %}
+<section class="tool-page container">
+  <div class="tool-breadcrumb"><a href="{% url 'studio' %}">Document Studio</a><span>/</span><b>{{ tool.name }}</b></div>
+  <div class="tool-page-heading"><span class="tool-page-icon icon-{{ tool.icon }}">{% if tool.slug == 'merge' %}▤{% elif tool.slug == 'split' %}⇱{% elif tool.slug == 'extract' %}▣{% elif tool.slug == 'rotate' %}↻{% elif tool.slug == 'remove' %}×{% elif tool.slug == 'reorder' %}☷{% elif tool.slug == 'watermark' %}✦{% elif tool.slug == 'page-numbers' %}# {% elif tool.slug == 'images-to-pdf' %}▧{% elif tool.slug == 'protect' %}♙{% else %}◉{% endif %}</span><div><span class="section-kicker">{{ tool.group|upper }} TOOL</span><h1>{{ tool.name }}</h1><p>{{ tool.description }}</p></div><span class="local-tag"><i></i> Local processing</span></div>
+  <div class="tool-work-grid">
+    <section class="tool-work-card">
+      <form method="post" action="{% url 'process_tool' %}" enctype="multipart/form-data" id="pdfToolForm" data-tool-form>
+        {% csrf_token %}<input type="hidden" name="operation" value="{{ tool.slug }}">
+        <div class="step-header"><span>01</span><div><h2>{% if tool.slug == 'images-to-pdf' or tool.slug == 'image-to-text' %}Choose image files{% elif tool.multi %}Add files to combine{% elif tool.family == 'pdf' %}Choose a source PDF{% else %}Choose a source document{% endif %}</h2><p>Select files from your device. Processing is performed by this self-managed Django application, not a third-party document API.</p></div></div>
+        <label class="drop-zone" id="fileDropZone" for="pdfFileInput" tabindex="0"><input class="visually-hidden-file" type="file" id="pdfFileInput" name="files" {% if tool.multi %}multiple{% endif %} accept="{{ tool.accept }}" required><span class="drop-illustration">↑</span><b>Drop files here or browse your device</b><span class="drop-subtitle">{{ tool.accept }} · Up to {{ max_upload_mb|default:100 }} MB combined</span><span class="drop-link">Browse files</span></label>
+        <div id="selectedFiles" class="selected-files" aria-live="polite"></div>
+
+        <div class="options-panel">
+          <div class="step-header"><span>02</span><div><h2>Customize the operation</h2><p>Fine-tune the output before you process it.</p></div></div>
+          {% if tool.slug == 'split' %}
+            <label class="field-label" for="splitMode">Split method</label><select class="form-select" name="split_mode" id="splitMode"><option value="ranges">Custom page ranges</option><option value="fixed">Equal page batches</option><option value="each">One PDF per page</option></select>
+            <div id="rangeOptions"><label class="field-label" for="ranges">Page ranges</label><input class="form-control" id="ranges" name="ranges" placeholder="1-3,4-6,7-9"><small class="field-help">Each comma-separated range becomes a separate PDF. For example, 1-3,4-6 creates two files.</small></div>
+            <div id="fixedOptions" class="d-none"><label class="field-label" for="pagesPerFile">Pages per file</label><input class="form-control" type="number" min="1" id="pagesPerFile" name="pages_per_file" value="5"><small class="field-help">The final output file may contain fewer pages than the others.</small></div>
+          {% elif tool.slug == 'extract' %}
+            <label class="field-label" for="pages">Pages to keep</label><input class="form-control" id="pages" name="pages" placeholder="1,3-5,8" required><small class="field-help">Use numbers and ranges, for example 1,3-5,8. The order you enter will be preserved.</small>
+          {% elif tool.slug == 'remove' %}
+            <label class="field-label" for="pages">Pages to remove</label><input class="form-control" id="pages" name="pages" placeholder="2,5-7" required><small class="field-help">At least one page must remain in the output.</small>
+          {% elif tool.slug == 'rotate' %}
+            <label class="field-label" for="pages">Pages to rotate</label><input class="form-control" id="pages" name="pages" value="all" placeholder="all or 1,3-5"><label class="field-label" for="angle">Rotation angle</label><select class="form-select" id="angle" name="angle"><option value="90">Clockwise 90°</option><option value="180">180°</option><option value="270">Clockwise 270°</option></select>
+          {% elif tool.slug == 'reorder' %}
+            <label class="field-label" for="order">New page order</label><input class="form-control" id="order" name="order" placeholder="3,1,2,4-6" required><small class="field-help">The sequence must include every page exactly once.</small>
+          {% elif tool.slug == 'watermark' %}
+            <label class="field-label" for="watermark">Watermark text</label><input class="form-control" id="watermark" name="watermark" value="CONFIDENTIAL" maxlength="100" required><small class="field-help">Text is placed diagonally across every page.</small>
+          {% elif tool.slug == 'page-numbers' %}
+            <label class="field-label" for="startNumber">Start page numbering at</label><input class="form-control" id="startNumber" type="number" name="start_number" value="1" min="0" max="999999" required><small class="field-help">Numbers are printed at the bottom-right of each page.</small>
+          {% elif tool.slug == 'protect' %}
+            <label class="field-label" for="newPassword">New PDF password</label><input class="form-control" id="newPassword" type="password" name="new_password" minlength="8" autocomplete="new-password" required><label class="field-label" for="confirmPassword">Confirm password</label><input class="form-control" id="confirmPassword" type="password" name="confirm_password" minlength="8" autocomplete="new-password" required><small class="field-help">Use at least 8 characters. This password is only used for the current request and is not saved.</small>
+          {% elif tool.slug == 'unlock' %}
+            <label class="field-label" for="pdfPassword">Current PDF password</label><input class="form-control" id="pdfPassword" type="password" name="pdf_password" autocomplete="current-password" required><small class="field-help">This tool removes encryption only when the current password is valid. It does not bypass security.</small>
+          {% elif tool.slug == 'merge' %}
+            <div class="info-callout"><span>↕</span><p>Choose at least two PDFs. Use the arrows beside each filename to set the merge order.</p></div>
+          {% elif tool.slug == 'optimize' %}
+            <div class="info-callout"><span>ⓘ</span><p>Optimization re-saves and compresses eligible page content streams. It does not guarantee image compression or a smaller file size.</p></div>
+          {% elif tool.slug == 'images-to-pdf' %}
+            <div class="info-callout"><span>▧</span><p>Choose JPG or PNG images. Each image becomes a page in the output PDF, in the order shown above.</p></div>
+          {% elif tool.slug == 'pdf-to-images' %}
+            <label class="field-label" for="pages">Pages to export</label><input class="form-control" id="pages" name="pages" value="all" placeholder="all or 1,3-5"><small class="field-help">Use page numbers and ranges such as 1,3-5. Use all to export every page.</small>
+            <label class="field-label" for="dpi">Image resolution</label><select class="form-select" id="dpi" name="dpi"><option value="72">72 DPI · smaller files</option><option value="96">96 DPI · screen</option><option value="144" selected>144 DPI · balanced</option><option value="200">200 DPI · print detail</option></select>
+          {% elif tool.slug == 'word-replace' %}
+            <label class="field-label" for="findText">Find this exact text</label><input class="form-control" id="findText" name="find_text" maxlength="500" placeholder="Existing word or phrase" required>
+            <label class="field-label" for="replaceText">Replace with</label><textarea class="form-control" id="replaceText" name="replace_text" rows="3" maxlength="2000" placeholder="Replacement text (can be blank)"></textarea><small class="field-help">Matching is case-sensitive and runs across body text, tables, headers and footers.</small>
+          {% elif tool.slug == 'text-to-word' %}
+            <div class="info-callout"><span>W</span><p>For Markdown input, basic headings, bold/italic emphasis, lists, block quotes and simple pipe tables become editable Word formatting. Plain text remains plain paragraphs. Embedded images and complex Markdown extensions are not imported.</p></div>
+          {% elif tool.slug == 'word-to-markdown' %}
+            <div class="info-callout"><span>≡</span><p>Exports document headings, common list styles, paragraph text and tables as Markdown. The result is best for further editing or version control; page design and floating objects do not transfer.</p></div>
+          {% elif tool.slug == 'word-extract-images' %}
+            <div class="info-callout"><span>▧</span><p>Extracts image assets embedded in the DOCX package. A single image downloads directly; several images are packaged as a ZIP.</p></div>
+          {% elif tool.slug == 'word-template-fill' %}
+            <div class="info-callout"><span>✉</span><p>Select one DOCX template and one CSV data file. In Word, put placeholders like <code>{% templatetag openvariable %}FullName{% templatetag closevariable %}</code>, <code>{% templatetag openvariable %}Company{% templatetag closevariable %}</code> or <code>{% templatetag openvariable %}InvoiceNo{% templatetag closevariable %}</code>. The CSV header must contain the exact matching field name. Each data row creates one separate Word file; more than one file is returned as a ZIP.</p></div>
+          {% elif tool.slug == 'word-compare' %}
+            <div class="info-callout"><span>⇄</span><p>Select the older DOCX first and the newer version second. Papyronix returns a text change report using a deterministic local line comparison. It does not compare visual layout or tracked-change metadata.</p></div>
+          {% elif tool.slug == 'excel-compare' %}
+            <div class="info-callout"><span>⇄</span><p>Select the earlier XLSX first and the later version second. The output CSV identifies changed, added and removed cell values across worksheets.</p></div>
+          {% elif tool.slug == 'word-table-to-excel' %}
+            <div class="info-callout"><span>▦</span><p>Every top-level Word table becomes a separate Excel worksheet. This extracts cell data, not Word page layout or embedded images.</p></div>
+          {% elif tool.slug == 'word-add-page-numbers' %}
+            <div class="info-callout"><span>#</span><p>Adds a dynamic PAGE field to the footer of each document section. Open in Word or LibreOffice to update the displayed number.</p></div>
+          {% elif tool.slug == 'word-clear-metadata' %}
+            <div class="info-callout"><span>⌑</span><p>Clears common author/title/core document properties in the output copy. It does not scrub comments, tracked changes, embedded files, or all hidden data.</p></div>
+          {% elif tool.slug == 'text-to-pdf' %}
+            <label class="field-label" for="pdfPageSize">Paper size</label><select class="form-select" name="page_size" id="pdfPageSize"><option value="a4" selected>A4</option><option value="letter">US Letter</option></select>
+            <label class="field-label" for="pdfFontSize">Body font size</label><select class="form-select" name="font_size" id="pdfFontSize"><option value="8">8 pt</option><option value="9">9 pt</option><option value="10" selected>10 pt</option><option value="11">11 pt</option><option value="12">12 pt</option><option value="13">13 pt</option><option value="14">14 pt</option></select>
+          {% elif tool.slug == 'excel-sort' %}
+            <label class="field-label" for="sortColumn">Column header</label><input class="form-control" id="sortColumn" name="sort_column" placeholder="e.g. Date, Name or Amount" required>
+            <label class="field-label" for="sortSheet">Worksheet name <span class="optional-label">(blank = active sheet)</span></label><input class="form-control" id="sortSheet" name="sheet_name" maxlength="31" placeholder="e.g. Sales">
+            <label class="field-label" for="sortDirection">Sort direction</label><select class="form-select" name="sort_direction" id="sortDirection"><option value="ascending" selected>Ascending (A–Z, low to high)</option><option value="descending">Descending (Z–A, high to low)</option></select>
+          {% elif tool.slug == 'csv-filter' %}
+            <label class="field-label" for="filterColumn">Column header</label><input class="form-control" id="filterColumn" name="filter_column" placeholder="e.g. Status" required>
+            <label class="field-label" for="filterValue">Value to match</label><input class="form-control" id="filterValue" name="filter_value" maxlength="1000" placeholder="e.g. Approved" required>
+            <label class="field-label" for="filterMode">Match rule</label><select class="form-select" id="filterMode" name="filter_mode"><option value="contains" selected>Contains the value</option><option value="exact">Exact match</option></select><small class="field-help">Matching ignores capitalization and retains the original header row.</small>
+          {% elif tool.slug == 'csv-clean' %}
+            <div class="info-callout"><span>✓</span><p>Trims whitespace from every cell, removes fully blank rows and drops exact duplicate data rows. The first line remains the column header.</p></div>
+          {% elif tool.slug == 'excel-split-sheets' %}
+            <div class="info-callout"><span>▤</span><p>Creates one XLSX workbook per worksheet. All resulting files are provided in one ZIP archive.</p></div>
+          {% elif tool.slug == 'excel-to-word' %}
+            <div class="info-callout"><span>W</span><p>Creates a Word report with one table for each non-empty worksheet. It exports values into editable tables; it does not recreate Excel charts or pivot table layout.</p></div>
+          {% elif tool.slug == 'csv-to-excel' %}
+            <label class="field-label" for="delimiter">CSV field separator</label><select class="form-select" id="delimiter" name="delimiter"><option value="comma">Comma ,</option><option value="semicolon">Semicolon ;</option><option value="tab">Tab</option><option value="pipe">Vertical bar |</option></select><small class="field-help">The converted workbook keeps CSV cells as text values to avoid silently changing identifiers or leading zeros.</small>
+          {% elif tool.slug == 'pdf-ocr' or tool.slug == 'image-to-text' %}
+            <label class="field-label" for="ocrLanguage">OCR language code</label><input class="form-control" id="ocrLanguage" name="ocr_language" value="eng" placeholder="eng" maxlength="40"><small class="field-help">Use language codes installed with Tesseract, such as eng or fra. English is used by default.</small>
+            {% if tool.slug == 'pdf-ocr' %}<label class="field-label" for="ocrDpi">OCR render resolution</label><select class="form-select" id="ocrDpi" name="dpi"><option value="100">100 DPI · faster</option><option value="150" selected>150 DPI · balanced</option><option value="200">200 DPI · higher detail</option></select>{% endif %}
+          {% elif tool.slug == 'excel-clean' %}
+            <div class="info-callout"><span>✓</span><p>Blank rows and exact duplicate rows are removed on every worksheet. Original workbook is unchanged.</p></div>
+          {% elif tool.slug == 'excel-merge' %}
+            <div class="info-callout"><span>▤</span><p>Each worksheet from each workbook becomes a separate sheet in one output workbook. Basic cell formatting is retained where possible.</p></div>
+          {% elif tool.slug == 'word-clean' %}
+            <div class="info-callout"><span>✓</span><p>Normalize excess spaces and remove empty body paragraphs. Review the result before using it as your final document.</p></div>
+          {% elif tool.slug == 'word-to-pdf' or tool.slug == 'excel-to-pdf' or tool.slug == 'pptx-to-pdf' %}
+            <div class="info-callout"><span>⌂</span><p>This conversion calls LibreOffice installed on your own computer/server. Install it locally first. No cloud converter or API key is involved.</p></div>
+          {% elif tool.slug == 'pdf-to-word' %}
+            <div class="info-callout"><span>W</span><p>This creates an editable Word text document from selectable PDF text. It does not recreate the original PDF layout or transcribe image-only scans.</p></div>
+          {% elif tool.slug == 'pdf-to-text' %}
+            <div class="info-callout"><span>≡</span><p>Each extracted page is labeled in the text output. Image-only scans need local OCR before their text can be extracted.</p></div>
+          {% elif tool.slug == 'pptx-to-word' %}
+            <div class="info-callout"><span>W</span><p>Creates a document outline from slide headings, text boxes and table contents. It is not a slide-layout conversion.</p></div>
+          {% endif %}
+          {% if tool.family == 'pdf' and tool.slug != 'images-to-pdf' and tool.slug != 'unlock' and tool.slug != 'image-to-text' %}
+            <label class="field-label" for="pdfPassword">Source PDF password <span class="optional-label">(only if encrypted)</span></label><input class="form-control" id="pdfPassword" type="password" name="pdf_password" autocomplete="current-password" placeholder="Leave blank if the PDF is not protected"><small class="field-help">The password is used only for this request and is not written to the activity log.</small>
+          {% elif tool.slug == 'word-count' %}
+            <label class="field-label" for="pdfPassword">PDF password <span class="optional-label">(only if the source is an encrypted PDF)</span></label><input class="form-control" id="pdfPassword" type="password" name="pdf_password" autocomplete="current-password" placeholder="Optional PDF password"><small class="field-help">Used only for this request; it is not logged.</small>
+          {% endif %}
+        </div>
+        {% if error %}<div class="tool-error" role="alert"><b>We couldn't process that file.</b><span>{{ error }}</span></div>{% endif %}
+        <div class="tool-error d-none" id="liveError" role="alert"></div><div class="tool-success d-none" id="liveSuccess" role="status"></div>
+        <button class="button-primary process-button" id="processButton" type="submit"><span class="button-label">Process file <span>→</span></span><span class="button-loading d-none"><span class="spinner-border spinner-border-sm" role="status"></span> Processing on your server…</span></button>
+        <p class="process-note"><span>⌑</span> Original files are not overwritten. The output downloads to your device.</p>
+      </form>
+    </section>
+    <aside class="tool-sidebar">
+      <section class="side-info-card"><span class="side-card-icon">♧</span><h3>Local-first processing</h3><p>This operation runs through Python/Django and local libraries on the computer or server you control. No AI token, AI API, or third-party document API is used.</p><div class="side-check">✓ <span>Original files are not overwritten.</span></div><div class="side-check">✓ <span>Files are processed by your own app.</span></div><div class="side-check">✓ <span>Some Office-to-PDF and OCR tools need LibreOffice or Tesseract installed locally.</span></div></section>
+      <section class="side-info-card"><span class="section-kicker">HOW IT WORKS</span><div class="mini-step"><b>1</b><span>Choose file(s)</span></div><div class="mini-step"><b>2</b><span>Customize options</span></div><div class="mini-step"><b>3</b><span>Process and download</span></div></section>
+      <section class="side-ai-card"><span>⌕</span><h3>Find text in saved files</h3><p>Save a document in your local library and use the built-in search to find matching passages without sending its contents to an AI service.</p><a href="{% url 'assistant' %}">Open local search →</a></section>
+    </aside>
+  </div>
+</section>
+{% endblock %}

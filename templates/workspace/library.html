@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+{% block title %}Private Document Library — Papyronix AI{% endblock %}
+{% block content %}
+<section class="page-hero compact-hero"><div class="container"><div class="eyebrow"><span class="eyebrow-pulse"></span> PRIVATE WORKSPACE</div><h1>Your document library.</h1><p>Store documents on your own server, index their text locally and search them without a cloud AI dependency.</p></div></section>
+<div class="container library-content">
+  <div class="privacy-notice"><span>⌑</span><div><b>Your files stay on the server you control.</b><p>Files uploaded here are saved under the local media directory and linked to your account. They are not sent to a document-processing API. This library has a 25 MB per-file limit.</p></div><a href="{% url 'studio' %}">Document Studio ↗</a></div>
+  <div class="library-toolbar"><div><span class="section-kicker">DOCUMENTS</span><h2>{{ total_documents }} saved file{{ total_documents|pluralize }}</h2></div><form class="library-search" method="get"><input type="search" name="q" value="{{ query }}" placeholder="Search filenames…" aria-label="Search filenames"><button type="submit">⌕</button></form></div>
+  <form method="post" enctype="multipart/form-data" class="upload-strip">{% csrf_token %}<div class="upload-strip-icon">↑</div><div class="upload-strip-copy"><b>Add documents to your workspace</b><span>PDF, DOCX, TXT, Markdown, CSV, XLSX and PPTX</span></div><input id="libraryFile" type="file" name="document" accept=".pdf,.docx,.txt,.md,.csv,.xlsx,.pptx" required><button type="submit" class="button-primary">Upload and index <span>→</span></button></form>
+  {% if query %}<p class="search-caption">Search results for “{{ query }}”</p>{% endif %}
+  <div class="library-list">
+    {% for document in documents %}
+      <article class="library-row"><div class="library-file-icon {% cycle 'blue' 'violet' 'green' 'amber' %}">{% if document.content_type == 'text/csv' or document.original_name|lower|slice:'-4:' == '.csv' %}▦{% elif document.original_name|lower|slice:'-5:' == '.docx' %}W{% elif document.original_name|lower|slice:'-5:' == '.xlsx' %}X{% elif document.original_name|lower|slice:'-5:' == '.pptx' %}P{% else %}PDF{% endif %}</div><div class="library-file-meta"><b>{{ document.original_name }}</b><span>{{ document.content_type|default:'Document' }} · {{ document.size_bytes|filesizeformat }} · Added {{ document.created_at|date:'M j, Y' }}</span><p>{{ document.extracted_text|truncatechars:155 }}</p></div><div class="library-row-actions"><a class="small-action" href="{% url 'download_document' document.pk %}" title="Download document">↓ Download</a><a class="small-action primary-action" href="{% url 'assistant' %}?document={{ document.pk }}">Find in file ↗</a><form method="post" action="{% url 'delete_document' document.pk %}" data-confirm="Delete this document from your local library?" class="inline-form">{% csrf_token %}<button class="icon-action danger-action" type="submit" title="Delete document" aria-label="Delete {{ document.original_name }}">×</button></form></div></article>
+    {% empty %}
+      <div class="empty-state"><span>▤</span><h3>{% if query %}No matching files{% else %}Your library starts here{% endif %}</h3><p>{% if query %}Try a different filename search.{% else %}Upload your first document. Papyronix extracts text locally so the offline assistant can find useful passages later.{% endif %}</p></div>
+    {% endfor %}
+  </div>
+  <div class="library-footnote"><span>✓</span> File contents are stored in your local database/filesystem. Back up both <code>db.sqlite3</code> and the <code>media/</code> directory.</div>
+</div>
+{% endblock %}

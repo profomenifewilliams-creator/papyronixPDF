@@ -1,0 +1,140 @@
+{% extends "base.html" %}
+{% block title %}Document Builder — Papyronix{% endblock %}
+{% block content %}
+<section class="page-hero compact-hero"><div class="container"><div class="eyebrow"><span class="eyebrow-pulse"></span> TEMPLATE-BASED DOCUMENT CREATION</div><h1>Document Builder</h1><p>Create polished, editable Word documents from structured information. It uses templates and rules—not a language model, AI token or remote API.</p><div class="page-hero-badges"><span>● Word or PDF output</span><span>● No AI API</span><span>● Your content stays on your app</span></div></div></section>
+<section class="container builder-page">
+  <div class="builder-intro"><div><span class="section-kicker">START WITH A TEMPLATE</span><h2>Get the structure right first.</h2><p>Choose a document type and complete the relevant fields. The builder assembles headings, tables, lists and page numbers for you. Review the result before sending or publishing it.</p></div><div class="builder-local-mark"><span>DOC</span><b>Generated locally</b><small>Structured templates · No text-generation service</small></div></div>
+  {% if error %}<div class="tool-error builder-error" role="alert"><b>The document could not be created.</b><span>{{ error }}</span></div>{% endif %}
+  <form method="post" action="{% url 'builder' %}" class="builder-form" id="documentBuilderForm">
+    {% csrf_token %}
+    <div class="builder-panel">
+      <div class="builder-panel-heading"><span class="builder-step">01</span><div><h2>Choose document type</h2><p>The builder shows the fields relevant to your selection.</p></div></div>
+      <div class="builder-grid">
+        <div class="builder-field builder-span-2"><label class="field-label" for="docType">Document template</label><select class="form-select" id="docType" name="doc_type" required>{% for slug, label in document_types.items %}<option value="{{ slug }}" {% if form_values.doc_type == slug %}selected{% elif not form_values.doc_type and slug == 'business-letter' %}selected{% endif %}>{{ label }}</option>{% endfor %}</select></div>
+        <div class="builder-field"><label class="field-label" for="outputFormat">Download format</label><select class="form-select" name="output_format" id="outputFormat"><option value="docx" {% if form_values.output_format != 'pdf' %}selected{% endif %}>Editable Word (.docx)</option><option value="pdf" {% if form_values.output_format == 'pdf' %}selected{% endif %}>PDF (.pdf, needs local LibreOffice)</option></select></div>
+        <div class="builder-field"><label class="field-label" for="documentTitle">Document title <span class="optional-label">(optional)</span></label><input class="form-control" id="documentTitle" name="document_title" maxlength="180" value="{{ form_values.document_title|default:'' }}" placeholder="e.g. Service Proposal"></div>
+      </div>
+      <div class="builder-note"><span>i</span><p>The fields below change when you select a different template. Any text you enter remains in the form when you switch templates.</p></div>
+    </div>
+
+    <div class="builder-panel builder-field-group" data-types="business-letter,project-report,meeting-minutes,resume,invoice,proposal">
+      <div class="builder-panel-heading"><span class="builder-step">02</span><div><h2>Sender or author details</h2><p>These details are placed into the document where applicable.</p></div></div>
+      <div class="builder-grid">
+        <div class="builder-field"><label class="field-label" for="fullName">Your name / business name</label><input class="form-control" id="fullName" name="full_name" maxlength="200" value="{{ form_values.full_name|default:'' }}" placeholder="Name or company"></div>
+        <div class="builder-field"><label class="field-label" for="organization">Organization <span class="optional-label">(optional)</span></label><input class="form-control" id="organization" name="organization" maxlength="200" value="{{ form_values.organization|default:'' }}"></div>
+        <div class="builder-field"><label class="field-label" for="email">Email <span class="optional-label">(optional)</span></label><input class="form-control" type="email" id="email" name="email" maxlength="254" value="{{ form_values.email|default:'' }}"></div>
+        <div class="builder-field"><label class="field-label" for="phone">Phone <span class="optional-label">(optional)</span></label><input class="form-control" id="phone" name="phone" maxlength="80" value="{{ form_values.phone|default:'' }}"></div>
+        <div class="builder-field builder-span-2"><label class="field-label" for="address">Business address or location <span class="optional-label">(optional)</span></label><input class="form-control" id="address" name="address" maxlength="500" value="{{ form_values.address|default:'' }}"></div>
+        <div class="builder-field"><label class="field-label" for="documentDate">Document date <span class="optional-label">(optional)</span></label><input class="form-control" type="date" id="documentDate" name="document_date" value="{{ form_values.document_date|default:'' }}"></div>
+      </div>
+    </div>
+
+    <div class="builder-panel builder-field-group" data-types="business-letter">
+      <div class="builder-panel-heading"><span class="builder-step">03</span><div><h2>Business letter</h2><p>A formal letter with a recipient block, subject, body and sign-off.</p></div></div>
+      <div class="builder-grid">
+        <div class="builder-field"><label class="field-label" for="recipientNameLetter">Recipient name</label><input class="form-control" id="recipientNameLetter" name="recipient_name_letter" maxlength="200" value="{{ form_values.recipient_name|default:'' }}"></div>
+        <div class="builder-field"><label class="field-label" for="recipientOrganizationLetter">Recipient organization</label><input class="form-control" id="recipientOrganizationLetter" name="recipient_organization_letter" maxlength="200" value="{{ form_values.recipient_organization|default:'' }}"></div>
+        <div class="builder-field builder-span-2"><label class="field-label" for="recipientAddressLetter">Recipient address <span class="optional-label">(optional)</span></label><input class="form-control" id="recipientAddressLetter" name="recipient_address_letter" maxlength="500" value="{{ form_values.recipient_address|default:'' }}"></div>
+        <div class="builder-field builder-span-2"><label class="field-label" for="subject">Subject</label><input class="form-control" id="subject" name="subject" maxlength="300" value="{{ form_values.subject|default:'' }}"></div>
+        <div class="builder-field"><label class="field-label" for="greeting">Greeting <span class="optional-label">(optional)</span></label><input class="form-control" id="greeting" name="greeting" value="{{ form_values.greeting|default:'' }}" placeholder="Defaults to Dear Recipient"></div>
+        <div class="builder-field"><label class="field-label" for="closing">Closing <span class="optional-label">(optional)</span></label><input class="form-control" id="closing" name="closing" value="{{ form_values.closing|default:'Yours sincerely,' }}"></div>
+        <div class="builder-field builder-span-2"><label class="field-label" for="letterBody">Letter body</label><textarea class="form-control builder-textarea" id="letterBody" name="body" rows="8" maxlength="20000" placeholder="Write the message you want the letter to communicate.">{{ form_values.body|default:'' }}</textarea></div>
+        <div class="builder-field"><label class="field-label" for="signatoryName">Signatory name <span class="optional-label">(defaults to your name)</span></label><input class="form-control" id="signatoryName" name="signatory_name" maxlength="200" value="{{ form_values.signatory_name|default:'' }}"></div>
+        <div class="builder-field"><label class="field-label" for="signatoryRole">Signatory role <span class="optional-label">(optional)</span></label><input class="form-control" id="signatoryRole" name="signatory_role" maxlength="200" value="{{ form_values.signatory_role|default:'' }}"></div>
+      </div>
+    </div>
+
+    <div class="builder-panel builder-field-group" data-types="project-report">
+      <div class="builder-panel-heading"><span class="builder-step">03</span><div><h2>Project or business report</h2><p>Build a structured report with summary, background, findings and recommendations.</p></div></div>
+      <div class="builder-grid">
+        <div class="builder-field builder-span-2"><label class="field-label" for="reportSummary">Executive summary</label><textarea class="form-control builder-textarea" id="reportSummary" name="report_executive_summary" rows="4" maxlength="20000">{{ form_values.executive_summary|default:'' }}</textarea></div>
+        <div class="builder-field builder-span-2"><label class="field-label" for="reportBackground">Background and objectives</label><textarea class="form-control builder-textarea" id="reportBackground" name="background" rows="4" maxlength="20000">{{ form_values.background|default:'' }}</textarea></div>
+        <div class="builder-field"><label class="field-label" for="reportFindings">Findings <span class="optional-label">(one item per line)</span></label><textarea class="form-control builder-textarea" id="reportFindings" name="findings" rows="6" maxlength="20000">{{ form_values.findings|default:'' }}</textarea></div>
+        <div class="builder-field"><label class="field-label" for="reportRecommendations">Recommendations <span class="optional-label">(one item per line)</span></label><textarea class="form-control builder-textarea" id="reportRecommendations" name="recommendations" rows="6" maxlength="20000">{{ form_values.recommendations|default:'' }}</textarea></div>
+        <div class="builder-field builder-span-2"><label class="field-label" for="reportConclusion">Conclusion</label><textarea class="form-control builder-textarea" id="reportConclusion" name="conclusion" rows="4" maxlength="20000">{{ form_values.conclusion|default:'' }}</textarea></div>
+      </div>
+    </div>
+
+    <div class="builder-panel builder-field-group" data-types="meeting-minutes">
+      <div class="builder-panel-heading"><span class="builder-step">03</span><div><h2>Meeting minutes</h2><p>Record attendees, agenda, discussion, decisions and action owners.</p></div></div>
+      <div class="builder-grid">
+        <div class="builder-field"><label class="field-label" for="meetingTitle">Meeting title</label><input class="form-control" id="meetingTitle" name="meeting_title" maxlength="300" value="{{ form_values.meeting_title|default:'' }}"></div>
+        <div class="builder-field"><label class="field-label" for="meetingDate">Meeting date</label><input class="form-control" id="meetingDate" name="meeting_date" value="{{ form_values.meeting_date|default:'' }}" placeholder="e.g. 26 October 2026"></div>
+        <div class="builder-field"><label class="field-label" for="meetingLocation">Location / platform</label><input class="form-control" id="meetingLocation" name="meeting_location" maxlength="300" value="{{ form_values.meeting_location|default:'' }}"></div>
+        <div class="builder-field"><label class="field-label" for="chair">Chair / facilitator</label><input class="form-control" id="chair" name="chair" maxlength="200" value="{{ form_values.chair|default:'' }}"></div>
+        <div class="builder-field"><label class="field-label" for="attendees">Attendees <span class="optional-label">(one per line)</span></label><textarea class="form-control builder-textarea" id="attendees" name="attendees" rows="4" maxlength="20000">{{ form_values.attendees|default:'' }}</textarea></div>
+        <div class="builder-field"><label class="field-label" for="agenda">Agenda <span class="optional-label">(one item per line)</span></label><textarea class="form-control builder-textarea" id="agenda" name="agenda" rows="4" maxlength="20000">{{ form_values.agenda|default:'' }}</textarea></div>
+        <div class="builder-field builder-span-2"><label class="field-label" for="discussion">Discussion notes</label><textarea class="form-control builder-textarea" id="discussion" name="discussion" rows="5" maxlength="20000">{{ form_values.discussion|default:'' }}</textarea></div>
+        <div class="builder-field"><label class="field-label" for="decisions">Decisions <span class="optional-label">(one per line)</span></label><textarea class="form-control builder-textarea" id="decisions" name="decisions" rows="4" maxlength="20000">{{ form_values.decisions|default:'' }}</textarea></div>
+        <div class="builder-field"><label class="field-label" for="actionItems">Action items <span class="optional-label">(Action | Owner | Due date)</span></label><textarea class="form-control builder-textarea" id="actionItems" name="action_items" rows="4" maxlength="20000" placeholder="Prepare the budget | A. Okafor | 30 Oct 2026">{{ form_values.action_items|default:'' }}</textarea></div>
+      </div>
+    </div>
+
+    <div class="builder-panel builder-field-group" data-types="resume">
+      <div class="builder-panel-heading"><span class="builder-step">03</span><div><h2>CV / resume</h2><p>A clean, editable CV with profile, skills, experience and education sections.</p></div></div>
+      <div class="builder-grid">
+        <div class="builder-field builder-span-2"><label class="field-label" for="headline">Professional headline <span class="optional-label">(optional)</span></label><input class="form-control" id="headline" name="headline" maxlength="300" value="{{ form_values.headline|default:'' }}" placeholder="e.g. Software Engineer | Data Analyst"></div>
+        <div class="builder-field builder-span-2"><label class="field-label" for="professionalSummary">Professional summary</label><textarea class="form-control builder-textarea" id="professionalSummary" name="professional_summary" rows="4" maxlength="20000">{{ form_values.professional_summary|default:'' }}</textarea></div>
+        <div class="builder-field"><label class="field-label" for="skills">Key skills <span class="optional-label">(one per line)</span></label><textarea class="form-control builder-textarea" id="skills" name="skills" rows="5" maxlength="20000">{{ form_values.skills|default:'' }}</textarea></div>
+        <div class="builder-field"><label class="field-label" for="experience">Work experience <span class="optional-label">(include roles, employers and results)</span></label><textarea class="form-control builder-textarea" id="experience" name="experience" rows="5" maxlength="20000">{{ form_values.experience|default:'' }}</textarea></div>
+        <div class="builder-field"><label class="field-label" for="education">Education</label><textarea class="form-control builder-textarea" id="education" name="education" rows="4" maxlength="20000">{{ form_values.education|default:'' }}</textarea></div>
+        <div class="builder-field"><label class="field-label" for="certifications">Certifications and training</label><textarea class="form-control builder-textarea" id="certifications" name="certifications" rows="4" maxlength="20000">{{ form_values.certifications|default:'' }}</textarea></div>
+        <div class="builder-field builder-span-2"><label class="field-label" for="references">References <span class="optional-label">(optional)</span></label><textarea class="form-control builder-textarea" id="references" name="references" rows="3" maxlength="20000">{{ form_values.references|default:'' }}</textarea></div>
+      </div>
+    </div>
+
+    <div class="builder-panel builder-field-group" data-types="invoice">
+      <div class="builder-panel-heading"><span class="builder-step">03</span><div><h2>Invoice</h2><p>Generate an itemized invoice with quantities and automatic line totals.</p></div></div>
+      <div class="builder-grid">
+        <div class="builder-field"><label class="field-label" for="invoiceNumber">Invoice number</label><input class="form-control" id="invoiceNumber" name="invoice_number" maxlength="100" value="{{ form_values.invoice_number|default:'' }}"></div>
+        <div class="builder-field"><label class="field-label" for="invoiceDate">Issue date</label><input class="form-control" id="invoiceDate" name="invoice_date" value="{{ form_values.invoice_date|default:'' }}"></div>
+        <div class="builder-field"><label class="field-label" for="dueDate">Due date</label><input class="form-control" id="dueDate" name="due_date" value="{{ form_values.due_date|default:'' }}"></div>
+        <div class="builder-field"><label class="field-label" for="currency">Currency label</label><input class="form-control" id="currency" name="currency" value="{{ form_values.currency|default:'NGN' }}" maxlength="12"></div>
+        <div class="builder-field builder-span-2"><label class="field-label" for="recipientNameInvoice">Bill to — client / recipient name</label><input class="form-control" id="recipientNameInvoice" name="recipient_name_invoice" maxlength="200" value="{{ form_values.recipient_name|default:'' }}"></div>
+        <div class="builder-field"><label class="field-label" for="recipientOrganizationInvoice">Client organization</label><input class="form-control" id="recipientOrganizationInvoice" name="recipient_organization_invoice" maxlength="200" value="{{ form_values.recipient_organization|default:'' }}"></div>
+        <div class="builder-field"><label class="field-label" for="recipientAddressInvoice">Client address</label><input class="form-control" id="recipientAddressInvoice" name="recipient_address_invoice" maxlength="500" value="{{ form_values.recipient_address|default:'' }}"></div>
+        <div class="builder-field builder-span-2"><label class="field-label" for="lineItems">Line items <span class="optional-label">(one item per line: Description | Quantity | Unit price)</span></label><textarea class="form-control builder-textarea" id="lineItems" name="line_items" rows="6" maxlength="20000" placeholder="Website design | 1 | 150000&#10;Monthly support | 2 | 25000">{{ form_values.line_items|default:'' }}</textarea><small class="field-help">Enter quantities and unit prices without currency symbols. The builder calculates each line amount and total.</small></div>
+        <div class="builder-field"><label class="field-label" for="paymentTerms">Payment terms</label><textarea class="form-control builder-textarea" id="paymentTerms" name="payment_terms" rows="3" maxlength="20000">{{ form_values.payment_terms|default:'' }}</textarea></div>
+        <div class="builder-field"><label class="field-label" for="paymentDetails">Payment details</label><textarea class="form-control builder-textarea" id="paymentDetails" name="payment_details" rows="3" maxlength="20000">{{ form_values.payment_details|default:'' }}</textarea></div>
+      </div>
+    </div>
+
+    <div class="builder-panel builder-field-group" data-types="proposal">
+      <div class="builder-panel-heading"><span class="builder-step">03</span><div><h2>Project proposal</h2><p>Organize objectives, scope, deliverables, timeline and investment.</p></div></div>
+      <div class="builder-grid">
+        <div class="builder-field builder-span-2"><label class="field-label" for="projectTitle">Project title</label><input class="form-control" id="projectTitle" name="project_title" maxlength="300" value="{{ form_values.project_title|default:'' }}"></div>
+        <div class="builder-field"><label class="field-label" for="recipientNameProposal">Prepared for — recipient</label><input class="form-control" id="recipientNameProposal" name="recipient_name_proposal" maxlength="200" value="{{ form_values.recipient_name|default:'' }}"></div>
+        <div class="builder-field"><label class="field-label" for="recipientOrganizationProposal">Recipient organization</label><input class="form-control" id="recipientOrganizationProposal" name="recipient_organization_proposal" maxlength="200" value="{{ form_values.recipient_organization|default:'' }}"></div>
+        <div class="builder-field builder-span-2"><label class="field-label" for="proposalSummary">Executive summary</label><textarea class="form-control builder-textarea" id="proposalSummary" name="proposal_executive_summary" rows="4" maxlength="20000">{{ form_values.executive_summary|default:'' }}</textarea></div>
+        <div class="builder-field"><label class="field-label" for="objectives">Objectives <span class="optional-label">(one per line)</span></label><textarea class="form-control builder-textarea" id="objectives" name="objectives" rows="4" maxlength="20000">{{ form_values.objectives|default:'' }}</textarea></div>
+        <div class="builder-field"><label class="field-label" for="scope">Scope of work</label><textarea class="form-control builder-textarea" id="scope" name="scope" rows="4" maxlength="20000">{{ form_values.scope|default:'' }}</textarea></div>
+        <div class="builder-field"><label class="field-label" for="deliverables">Deliverables <span class="optional-label">(one per line)</span></label><textarea class="form-control builder-textarea" id="deliverables" name="deliverables" rows="4" maxlength="20000">{{ form_values.deliverables|default:'' }}</textarea></div>
+        <div class="builder-field"><label class="field-label" for="timeline">Timeline and milestones</label><textarea class="form-control builder-textarea" id="timeline" name="timeline" rows="4" maxlength="20000">{{ form_values.timeline|default:'' }}</textarea></div>
+        <div class="builder-field"><label class="field-label" for="investment">Investment and payment terms</label><textarea class="form-control builder-textarea" id="investment" name="investment" rows="4" maxlength="20000">{{ form_values.investment|default:'' }}</textarea></div>
+        <div class="builder-field"><label class="field-label" for="assumptions">Assumptions and exclusions <span class="optional-label">(one per line)</span></label><textarea class="form-control builder-textarea" id="assumptions" name="assumptions" rows="4" maxlength="20000">{{ form_values.assumptions|default:'' }}</textarea></div>
+        <div class="builder-field builder-span-2"><label class="field-label" for="nextSteps">Proposed next steps <span class="optional-label">(one per line)</span></label><textarea class="form-control builder-textarea" id="nextSteps" name="next_steps" rows="3" maxlength="20000">{{ form_values.next_steps|default:'' }}</textarea></div>
+      </div>
+    </div>
+
+    <div class="builder-submit-row"><div><b>No AI-generated content</b><span>The document is assembled only from your information and the selected layout.</span></div><button type="submit" class="button-primary">Create downloadable document <span>→</span></button></div>
+  </form>
+  <div class="builder-footnote"><span>ⓘ</span><p>Review names, dates, figures and factual claims before issuing a document. The builder formats your supplied content; it does not create facts, legal advice or professional certifications.</p></div>
+</section>
+{% endblock %}
+{% block extra_js %}
+<script>
+(function () {
+  const select = document.getElementById('docType');
+  const groups = Array.from(document.querySelectorAll('.builder-field-group'));
+  function updateGroups() {
+    if (!select) return;
+    const current = select.value;
+    groups.forEach((group) => {
+      const types = (group.dataset.types || '').split(',');
+      group.classList.toggle('d-none', !types.includes(current));
+    });
+  }
+  if (select) { select.addEventListener('change', updateGroups); updateGroups(); }
+})();
+</script>
+{% endblock %}

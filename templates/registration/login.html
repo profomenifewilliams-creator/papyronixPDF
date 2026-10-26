@@ -1,0 +1,9 @@
+{% extends "base.html" %}
+{% block title %}Sign in — Papyronix AI{% endblock %}
+{% block content %}
+<section class="auth-page"><div class="auth-card"><a class="auth-brand" href="{% url 'home' %}"><span class="brand-mark">P</span><span>Papyronix<span>AI</span></span></a><span class="section-kicker">WELCOME BACK</span><h1>Sign in to your workspace.</h1><p class="auth-intro">Access your private document library and local activity history.</p>
+  {% if form.errors %}<div class="tool-error" role="alert"><b>Sign-in failed.</b><span>Check your username and password, then try again.</span></div>{% endif %}
+  <form method="post" class="auth-form">{% csrf_token %}<input type="hidden" name="next" value="{{ next }}"><label class="field-label" for="id_username">Username</label><input class="form-control" id="id_username" name="username" autocomplete="username" required autofocus><label class="field-label" for="id_password">Password</label><input class="form-control" id="id_password" type="password" name="password" autocomplete="current-password" required><button class="button-primary w-100" type="submit">Sign in <span>→</span></button></form>
+  <div class="auth-bottom">New to Papyronix? <a href="{% url 'register' %}">Create a local account</a></div><div class="auth-footnote">Document tools work without an account. An account is required to store a private library and view activity history.</div>
+</div></section>
+{% endblock %}

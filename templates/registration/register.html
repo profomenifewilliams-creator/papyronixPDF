@@ -1,0 +1,8 @@
+{% extends "base.html" %}
+{% block title %}Create workspace — Papyronix AI{% endblock %}
+{% block content %}
+<section class="auth-page"><div class="auth-card"><a class="auth-brand" href="{% url 'home' %}"><span class="brand-mark">P</span><span>Papyronix<span>AI</span></span></a><span class="section-kicker">YOUR PRIVATE WORKSPACE</span><h1>Create your account.</h1><p class="auth-intro">Account data and saved documents live in the database and filesystem you control.</p>
+  <form method="post" class="auth-form">{% csrf_token %}{% for field in form %}<div class="auth-field"><label class="field-label" for="{{ field.id_for_label }}">{{ field.label }}</label>{{ field }}{% if field.help_text %}<div class="field-help">{{ field.help_text|safe }}</div>{% endif %}{% for error in field.errors %}<div class="field-error">{{ error }}</div>{% endfor %}</div>{% endfor %}{% if form.non_field_errors %}<div class="tool-error">{{ form.non_field_errors }}</div>{% endif %}<button class="button-primary w-100" type="submit">Create workspace <span>→</span></button></form>
+  <div class="auth-bottom">Already have an account? <a href="{% url 'login' %}">Sign in</a></div><div class="auth-footnote">Choose a unique password. If you expose this application to the internet, configure HTTPS, secure cookies and a production secret key before launch.</div>
+</div></section>
+{% endblock %}

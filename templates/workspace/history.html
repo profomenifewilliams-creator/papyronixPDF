@@ -1,0 +1,6 @@
+{% extends "base.html" %}
+{% block title %}Activity History — Papyronix AI{% endblock %}
+{% block content %}
+<section class="page-hero compact-hero"><div class="container"><div class="eyebrow"><span class="eyebrow-pulse"></span> YOUR WORKSPACE</div><h1>Processing history.</h1><p>Your recent document jobs. Files themselves are not stored in this activity log.</p></div></section>
+<div class="container history-content"><div class="history-list">{% for job in jobs %}<article class="history-row"><span class="history-status {% if job.succeeded %}status-ok{% else %}status-fail{% endif %}">{% if job.succeeded %}✓{% else %}!{% endif %}</span><div class="history-main"><b>{{ job.operation|title }}</b><span>{{ job.input_names|join:', '|truncatechars:150 }}</span><small>{{ job.created_at|date:'M j, Y · H:i' }} · {{ job.elapsed_ms }} ms · {{ job.input_bytes|filesizeformat }}</small></div><span class="history-outcome">{% if job.succeeded %}Completed{% else %}Not completed{% endif %}</span></article>{% empty %}<div class="empty-state"><span>◷</span><h3>No activity yet</h3><p>Once you process files while signed in, their operations will appear here.</p><a href="{% url 'studio' %}" class="button-primary">Open Document Studio →</a></div>{% endfor %}</div></div>
+{% endblock %}

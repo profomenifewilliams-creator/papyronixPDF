@@ -1,0 +1,18 @@
+services:
+  papyronix:
+    build: .
+    container_name: papyronix-ai
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    environment:
+      DJANGO_SECRET_KEY: ${DJANGO_SECRET_KEY:-local-docker-secret-change-before-public-hosting}
+      DJANGO_DEBUG: "False"
+      DJANGO_ALLOWED_HOSTS: ${DJANGO_ALLOWED_HOSTS:-localhost,127.0.0.1}
+      DJANGO_SECURE_SSL_REDIRECT: "False"
+      DJANGO_SECURE_COOKIES: "False"
+      DJANGO_HSTS_SECONDS: "0"
+      PAPYRONIX_DATA_DIR: /app/data
+      PAPYRONIX_MEDIA_ROOT: /app/data/media
+    volumes:
+      - ./data:/app/data

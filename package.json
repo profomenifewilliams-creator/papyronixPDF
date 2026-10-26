@@ -1,0 +1,12 @@
+{
+  "name": "papyronix-ai-local-assets",
+  "private": true,
+  "version": "1.0.0",
+  "description": "Optional local asset rebuild for Papyronix AI. The Django app runs without Node.js once dependencies are installed.",
+  "devDependencies": {
+    "tailwindcss": "3.4.17"
+  },
+  "scripts": {
+    "build:css": "tailwindcss -c tailwind.config.js -i ./static/src/tailwind.css -o ./static/css/tailwind.css --minify"
+  }
+}
