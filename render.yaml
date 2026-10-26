@@ -6,7 +6,7 @@ databases:
   - name: papyronix-ai-db
     databaseName: papyronix_ai
     user: papyronix_ai
-    plan: 256mb
+    plan: basic-256mb
     region: frankfurt
     postgresMajorVersion: "18"
 
