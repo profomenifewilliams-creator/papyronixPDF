@@ -3,8 +3,7 @@ name: Unpack Papyronix project archive
 on:
   push:
     branches: [main]
-    paths:
-      - 'PapyronixAI_Django_Local.zip'
+  workflow_dispatch:
 
 permissions:
   contents: write
@@ -23,7 +22,7 @@ jobs:
           from pathlib import Path
           from zipfile import ZipFile
 
-          archive = Path('PapyronixAI_Django_Local.zip')
+          archive = Path('PapyronixAI_Complete_Project.zip')
           root = Path('.').resolve()
           if not archive.is_file():
               raise SystemExit('Project ZIP was not found at repository root.')
@@ -32,6 +31,9 @@ jobs:
                   target = (root / item.filename).resolve()
                   if target != root and root not in target.parents:
                       raise SystemExit(f'Unsafe archive path: {item.filename}')
+              bad = zf.testzip()
+              if bad:
+                  raise SystemExit(f'Archive integrity check failed at: {bad}')
               zf.extractall(root)
           archive.unlink()
           PY
