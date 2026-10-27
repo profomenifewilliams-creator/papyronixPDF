@@ -6,6 +6,7 @@ from core import views
 urlpatterns = [
     path("admin/", admin.site.urls),
     path("login/", auth_views.LoginView.as_view(template_name="login.html"), name="login"),
+    path("register/", views.register, name="register"),
     path("logout/", auth_views.LogoutView.as_view(), name="logout"),
     path("", views.dashboard, name="dashboard"),
     path("cases/", views.case_list, name="case_list"),
