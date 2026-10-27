@@ -1,0 +1,1 @@
+document.addEventListener("DOMContentLoaded",()=>{document.querySelectorAll("input,textarea,select").forEach(el=>el.classList.add("field-control"));document.querySelectorAll(".message").forEach(el=>{el.setAttribute("role","status");});});
