@@ -2,33 +2,59 @@ import csv
 import hashlib
 from pathlib import Path
 from django.contrib import messages
+from django.contrib.auth import login as auth_login
 from django.contrib.auth.decorators import login_required
+from django.contrib.auth.forms import UserCreationForm
 from django.http import FileResponse, Http404, HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils.text import get_valid_filename
 from .forms import CaseForm, EvidenceForm
 from .models import AuditEvent, EvidenceItem, InvestigationCase
 
+def register(request):
+    if request.user.is_authenticated:
+        return redirect("dashboard")
+    if request.method == "POST":
+        form = UserCreationForm(request.POST)
+        if form.is_valid():
+            user = form.save()
+            auth_login(request, user)
+            return redirect("dashboard")
+    else:
+        form = UserCreationForm()
+    return render(request, "register.html", {"form": form})
+
+
+def _visible_cases(request):
+    cases = InvestigationCase.objects.all()
+    if not (request.user.is_staff or request.user.is_superuser):
+        cases = cases.filter(created_by=request.user)
+    return cases
+
+
 def _audit(user, action, case=None, detail=""):
     AuditEvent.objects.create(actor=user, action=action, case=case, detail=detail[:400])
 
 @login_required
 def dashboard(request):
-    cases = InvestigationCase.objects.all()
+    cases = _visible_cases(request)
+    audit = AuditEvent.objects.select_related("actor", "case")
+    if not (request.user.is_staff or request.user.is_superuser):
+        audit = audit.filter(actor=request.user)
     context = {
         "total_cases": cases.count(),
         "open_cases": cases.filter(status="open").count(),
         "critical_cases": cases.filter(priority="critical").exclude(status="closed").count(),
         "evidence_count": EvidenceItem.objects.count(),
         "recent_cases": cases[:6],
-        "recent_audit": AuditEvent.objects.select_related("actor", "case")[:6],
+        "recent_audit": audit[:6],
     }
     return render(request, "dashboard.html", context)
 
 @login_required
 def case_list(request):
     query = request.GET.get("q", "").strip()
-    cases = InvestigationCase.objects.select_related("created_by")
+    cases = _visible_cases(request).select_related("created_by")
     if query:
         cases = cases.filter(case_number__icontains=query) | cases.filter(title__icontains=query)
     return render(request, "cases.html", {"cases": cases, "query": query})
@@ -50,13 +76,13 @@ def case_create(request):
 
 @login_required
 def case_detail(request, case_id):
-    case = get_object_or_404(InvestigationCase.objects.select_related("created_by"), pk=case_id)
+    case = get_object_or_404(_visible_cases(request).select_related("created_by"), pk=case_id)
     evidence = case.evidence.select_related("collected_by")
     return render(request, "case_detail.html", {"case": case, "evidence": evidence})
 
 @login_required
 def evidence_upload(request, case_id):
-    case = get_object_or_404(InvestigationCase, pk=case_id)
+    case = get_object_or_404(_visible_cases(request), pk=case_id)
     if request.method == "POST":
         form = EvidenceForm(request.POST, request.FILES)
         uploaded = request.FILES.get("file")
@@ -77,7 +103,10 @@ def evidence_upload(request, case_id):
 
 @login_required
 def evidence_download(request, evidence_id):
-    item = get_object_or_404(EvidenceItem.objects.select_related("case"), pk=evidence_id)
+    evidence = EvidenceItem.objects.select_related("case")
+    if not (request.user.is_staff or request.user.is_superuser):
+        evidence = evidence.filter(case__created_by=request.user)
+    item = get_object_or_404(evidence, pk=evidence_id)
     try:
         item.file.open("rb")
     except (FileNotFoundError, OSError, ValueError):
