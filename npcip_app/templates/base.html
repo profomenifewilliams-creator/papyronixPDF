@@ -15,6 +15,7 @@
 <div class="nav-label">WORKSPACE</div>
 <a href="{% url 'dashboard' %}" class="nav-link">▦ <span>Overview</span></a>
 <a href="{% url 'case_list' %}" class="nav-link">◫ <span>Investigations</span></a>
+<a href="{% url 'toolbench' %}" class="nav-link">⌘ <span>Local toolbench</span></a>
 {% if user.is_staff or user.is_superuser %}<a href="{% url 'audit_list' %}" class="nav-link">≋ <span>Audit trail</span></a><a href="{% url 'case_export' %}" class="nav-link">↓ <span>Export register</span></a>{% endif %}
 <div class="sidebar-bottom"><div class="user-card"><div class="avatar">{{ user.username|slice:":1"|upper }}</div><div class="user-meta"><strong>{{ user.username }}</strong><small>{% if user.is_superuser %}Administrator{% elif user.is_staff %}Authorized staff{% else %}Investigator{% endif %}</small></div></div><form method="post" action="{% url 'logout' %}">{% csrf_token %}<button class="logout" type="submit">Sign out</button></form><p class="legal-note">Training/demo environment.<br>Do not upload real evidence.</p></div>
 </aside>

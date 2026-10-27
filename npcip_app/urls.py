@@ -2,6 +2,7 @@ from django.contrib import admin
 from django.contrib.auth import views as auth_views
 from django.urls import path
 from core import views
+from core.tools_views import toolbench
 
 urlpatterns = [
     path("admin/", admin.site.urls),
@@ -11,6 +12,7 @@ urlpatterns = [
     path("", views.dashboard, name="dashboard"),
     path("cases/", views.case_list, name="case_list"),
     path("cases/new/", views.case_create, name="case_create"),
+    path("tools/", toolbench, name="toolbench"),
     path("cases/export.csv", views.case_export, name="case_export"),
     path("cases/<int:case_id>/", views.case_detail, name="case_detail"),
     path("cases/<int:case_id>/evidence/", views.evidence_upload, name="evidence_upload"),
