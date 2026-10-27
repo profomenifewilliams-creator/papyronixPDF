@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+{% block title %}Create demo account | NPCIP{% endblock %}
+{% block content %}
+<div class="login-wrap">
+  <div class="login-art">
+    <div class="brand-mark large">N</div>
+    <span class="eyebrow">DEMO ACCESS</span>
+    <h1>A controlled space to explore the workflow.</h1>
+    <p>New accounts are ordinary demo users. Each account sees only the investigation cases it creates. Use sample records and synthetic files exclusively.</p>
+  </div>
+  <div class="login-panel">
+    <span class="eyebrow">CREATE ACCOUNT</span>
+    <h2>Start your demo</h2>
+    <p class="muted">Choose a username and a strong password.</p>
+    <form method="post" class="form-stack">
+      {% csrf_token %}
+      {% if form.non_field_errors %}<div class="message error">{{ form.non_field_errors }}</div>{% endif %}
+      {% for field in form %}
+      <label>{{ field.label }}{{ field }}{% if field.help_text %}<small class="field-help">{{ field.help_text|safe }}</small>{% endif %}{% for error in field.errors %}<small class="field-error">{{ error }}</small>{% endfor %}</label>
+      {% endfor %}
+      <button class="btn primary full" type="submit">Create demo account <span>→</span></button>
+    </form>
+    <p class="muted signup-link">Already registered? <a href="{% url 'login' %}">Sign in</a></p>
+    <div class="security-hint">🔒 Public demo only. Do not upload genuine police records or evidence.</div>
+  </div>
+</div>
+{% endblock %}
