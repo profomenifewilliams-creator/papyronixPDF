@@ -10,6 +10,7 @@ from django.shortcuts import get_object_or_404, redirect, render
 from django.utils.text import get_valid_filename
 from .forms import CaseForm, EvidenceForm
 from .models import AuditEvent, EvidenceItem, InvestigationCase
+from .service_bridge import mirror_case
 
 def register(request):
     if request.user.is_authenticated:
@@ -69,6 +70,10 @@ def case_create(request):
             obj.save()
             _audit(request.user, "case.created", obj, f"Created case {obj.case_number}")
             messages.success(request, "Investigation case created.")
+            sync_result = mirror_case(obj)
+            if sync_result == "failed":
+                messages.warning(request, "The case was saved here, but the Java service mirror is unavailable. Check service configuration.")
+
             return redirect("case_detail", case_id=obj.pk)
     else:
         form = CaseForm()
